@@ -1,0 +1,29 @@
+# This file contains the naming conventions for all output files. It is automatically generated when going through step "0-Workflow".
+Data_File: meng.csv
+Library_Expression: 1
+Library_Sequence_single: True
+Sequence_column: Sequence
+Y_Col_Name: ['Ecol-expression']
+ID_Col_Name: Sequence-ID
+Figure_Type: png
+File_Base: meng
+Data_Folder: data-meng
+HM_File: Plot_PositionNucleotideStats
+SampSeqDist_File: Plot_SampleSequenceDistance
+Entropy_File: Plot_PositionEntropy
+SamplingDiv_File: Plot_SamplingDiversity
+ExprHist_File: Plot_ExpressionHist
+LogoPlot_File: Plot_Logo-FeatureImportance
+CorrPlot_File: Plot_Corr-Ytrue-VS-Ypred
+Csv_ID: Synth-Library
+X_Expr: Plot_CrossExpr
+RefSeq: 
+SynLib_Date: 20200224
+RFR_Date: 20200224
+TestRatio: 0.1
+RFR_Params_File: RFR_training-params
+RFR_ML_File: RFR_ML-File
+Expression_Unit: relative-strength
+Sequence_Distance_cutoff: 0.11
+Position_Diversity_cutoff: 0.2
+Synth_Seq_MaxNumber: 10000
