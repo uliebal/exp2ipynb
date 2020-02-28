@@ -535,7 +535,8 @@ def my_CrossValScore(X, Y, groups, cv, ML_fun, metric):
     '''
     import numpy as np
     
-    myscores = dict()
+    mytrain = list()
+    mytest = list()
     tst_num = cv.n_splits
     for idx in range(tst_num):
         cv.n_splits = 1
@@ -543,10 +544,11 @@ def my_CrossValScore(X, Y, groups, cv, ML_fun, metric):
         onetrain = mycv[0][0]
         onetest = mycv[0][1]
         ML_fun.fit(X[onetrain], Y[onetrain])
-        myscores.update({'train':metric(ML_fun, X[onetest], Y[onetest])})
+        mytrain.append({'train':metric(ML_fun, X[onetest], Y[onetest])})
 #         myscores.append(metric(ML_fun, X[onetest], Y[onetest]))
         
-    return np.array(myscores)
+    myscores = dict({'TrainR2':mytrain})
+    return myscores
     
 def my_SVR(SeqOH, Y_Col_Name):
     '''
