@@ -25,5 +25,5 @@ Sequence_Distance_cutoff: 0.4
 Position_Diversity_cutoff: 1.0
 Synth_Seq_MaxNumber: 10000
 Csv_ID: Synth-Library
-SynLib_Date: 20200225
-RFR_Date: 20200225
+SynLib_Date: 20200321
+RFR_Date: 20200321
