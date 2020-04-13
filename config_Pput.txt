@@ -5,6 +5,7 @@ Library_Sequence_single: True
 Sequence_column: Sequence
 Y_Col_Name: ['Promoter Activity']
 ID_Col_Name: Strain ID
+Add_Feat: ['GC-content']
 Figure_Type: svg
 File_Base: Example1-Pput
 Data_Folder: data-Example1-Pput
@@ -26,4 +27,4 @@ Position_Diversity_cutoff: 0.15
 Synth_Seq_MaxNumber: 5000
 SynLib_Date: 20191209
 Csv_ID: Synth-Library
-RFR_Date: 20191113
+RFR_Date: 20200413

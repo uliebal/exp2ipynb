@@ -5,6 +5,7 @@ Library_Sequence_single: True
 Sequence_column: Sequence
 Y_Col_Name: ['Ecol Promoter Activity', 'Ptai Promoter Activity']
 ID_Col_Name: Strain ID Ecol
+Add_Feat: ['GC-content']
 Figure_Type: png
 File_Base: PromLib_EcolPtai
 Data_Folder: data-PromLib_EcolPtai
@@ -26,4 +27,4 @@ Position_Diversity_cutoff: 1.0
 Synth_Seq_MaxNumber: 10000
 Csv_ID: Synth-Library
 SynLib_Date: 20200321
-RFR_Date: 20200321
+RFR_Date: 20200413

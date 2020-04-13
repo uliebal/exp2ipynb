@@ -5,6 +5,7 @@ Library_Sequence_single: True
 Sequence_column: Spacer
 Y_Col_Name: ['Ecol-Activity', 'Ptai-Activity']
 ID_Col_Name: Strain ID Ecol
+Add_Feat: ['GC-content']
 Figure_Type: png
 File_Base: Spacer_all
 Data_Folder: data-XHost_Replicates_Seq+Spacer
@@ -19,7 +20,7 @@ Csv_ID: Synth-Library
 X_Expr: Plot_CrossExpr
 RefSeq: 
 SynLib_Date: 20200214
-RFR_Date: 20200214
+RFR_Date: 20200413
 TestRatio: 0.1
 RFR_Params_File: RFR_training-params
 RFR_ML_File: RFR_ML-File

@@ -22,6 +22,7 @@ def Data_Src_Load(Name_Dict):
     '''
     import os
 #     import tkinter as tk
+    import numpy as np
     import pandas as pd
 #     from tkinter import filedialog
     from ExpressionExpert_Functions import list_integer, list_onehot
@@ -35,6 +36,10 @@ def Data_Src_Load(Name_Dict):
         SeqDat['Sequence_label-encrypted'] = list_integer(SeqDat[Seq_Col])
         SeqDat['Sequence_letter-encrypted'] = SeqDat[Seq_Col]
         SeqDat['Sequence'] = list_onehot(SeqDat['Sequence_label-encrypted'])
+        # GC content calculation
+        NuclSum = [np.sum(SeqDat['Sequence'][i], axis=0) for i in range(len(SeqDat))]
+        GCcont = np.sum(np.delete(np.vstack(NuclSum),[0,3],1), axis=1)/np.sum(np.vstack(NuclSum)[0])
+        SeqDat['GC-content'] = GCcont
     else:
         print('Multiple indepented sequence library analysis not yet supported.')
         
@@ -388,7 +393,7 @@ def Est_Grad_Feat(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter act
     X = np.array(SeqOH['OneHot'].values.tolist()).reshape(Sequence_Samples,Sequence_Positions*Sequence_Bases)
     # adding rows to x for additional features
     if AddFeat != None:
-        X = np.append(X,np.transpose(np.array([SeqOH[AddFeat]])), axis=1)
+        X = np.append(X,np.array(SeqOH[AddFeat]), axis=1)
     Y = SeqOH[Y_Col_Name].values
     groups = SeqOH['Sequence_letter-encrypted']
     Number_Estimators = np.arange(20,35,1)
@@ -402,15 +407,16 @@ def Est_Grad_Feat(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter act
     grid_forest = GridSearchCV(forest_grid, param_grid, cv=cv, n_jobs=-1)
     grid_forest.fit(X, Y, groups)
     
-    # remember to extract the features before rearranging the feature importance to a sequence position matrix form
-    if AddFeat != None:
-        Feature_Importance_Eng = grid_forest.best_estimator_.feature_importances_[-1]
-        Feature_Importance_Nucl = np.array(grid_forest.best_estimator_.feature_importances_[0:-1]).reshape(-1,4)
-    else:
-        Feature_Importance_Nucl = np.array(grid_forest.best_estimator_.feature_importances_).reshape(-1,4)
-        Feature_Importance_Eng = []
+#     # remember to extract the features before rearranging the feature importance to a sequence position matrix form
+#     if AddFeat != None:
+#         Feat_num = len(AddFeat)
+#         Feature_Importance_Nucl = np.array(grid_forest.best_estimator_.feature_importances_[0:-Feat_num]).reshape(-1,4)
+#         Feature_Importance_Eng = grid_forest.best_estimator_.feature_importances_[-Feat_num]
+#     else:
+#         Feature_Importance_Nucl = np.array(grid_forest.best_estimator_.feature_importances_).reshape(-1,4)
+#         Feature_Importance_Eng = []
         
-    return grid_forest, Feature_Importance_Nucl, Feature_Importance_Eng
+    return grid_forest #, Feature_Importance_Nucl, Feature_Importance_Eng
 
 def SequenceRandomizer_Parallel(RefSeq, Base_SequencePosition, n=1000):
     '''
