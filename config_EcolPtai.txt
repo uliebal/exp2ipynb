@@ -27,4 +27,4 @@ Position_Diversity_cutoff: 1.0
 Synth_Seq_MaxNumber: 10000
 Csv_ID: Synth-Library
 SynLib_Date: 20200321
-RFR_Date: 20200413
+RFR_Date: 20200414
