@@ -20,10 +20,11 @@ X_Expr: Plot_CrossExpr
 RFR_Params_File: RFR_training-params
 RFR_ML_File: RFR_ML-File
 RefSeq:
+Data_Standard: False
 Expression_Unit: GFP intensity
 TestRatio: .1
 Sequence_Distance_cutoff: 0.11
-Position_Diversity_cutoff: 0.15
+Entropy_cutoff: 0.15
 Synth_Seq_MaxNumber: 5000
 SynLib_Date: 20191209
 Csv_ID: Synth-Library

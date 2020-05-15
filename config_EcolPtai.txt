@@ -21,10 +21,11 @@ RFR_Params_File: RFR_training-params
 RFR_ML_File: RFR_ML-File
 Expression_Unit: $\mu$M(GFP)/(gCDW*h)
 RefSeq: GCCCATTGACAAGGCTCTCGCGGCCAGGTATAATTGCACG
+Data_Standard: False
 TestRatio: .1
 Sequence_Distance_cutoff: 0.4
-Position_Diversity_cutoff: 1.0
+Entropy_cutoff: 1.0
 Synth_Seq_MaxNumber: 10000
 Csv_ID: Synth-Library
 SynLib_Date: 20200321
-RFR_Date: 20200414
+RFR_Date: 20200515

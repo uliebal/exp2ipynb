@@ -91,7 +91,31 @@ def ExpressionScaler(SeqDat, Name_Dict):
      
     return SeqDat, Expr_Scaler
     
-
+# class ID_Scaler:
+#     '''
+#     Class to return the input just as a StandardScaler would. Used to harmonize the workflow with ML-approaches benefiting from standardization and those who do not.
+#     '''    
+#     def fit(self, X):
+#         return X
+#     def transform(self, X):
+#         return X
+#     def inverse_transform(self, X):
+#         return X
+    
+# def GenerateIDScaler(SeqDat, Name_Dict):
+#     '''
+#     Function to return the input just as a StandardScaler would. Used to harmonize the workflow with ML-approaches benefiting from standardization and those who do not.
+#     '''
+#     myIDScale = ID_Scaler()
+#     for idx in range(Measurement_Number):
+#         Column_Name = '{}_scaled'.format(Y_Col_Name[idx])
+#         myData = SeqDat[Y_Col_Name[idx]].values.reshape(-1, 1)
+#         SeqDat[Column_Name] = Expr_Scaler_n.fit_transform(myData)
+#         Scaler_Name = '{}_Scaler'.format(Y_Col_Name[idx])
+#         Expr_Scaler[Scaler_Name] = copy.deepcopy(Expr_Scaler_n)
+     
+#     return SeqDat, Expr_Scaler
+    
 def Insert_row_(row_number, df, row_value): 
     '''
     The function allow the insertion of rows in a dataframe. The index counting 
@@ -186,29 +210,29 @@ def list_sequence(IntegerList):
     
 ###############################################################################
 # General function to identify conserved sequences
-def Conserved_Sequence_Exclusion(SeqLab, n=0):
+def Conserved_Sequence_Exclusion(SeqLab, Entropy_cutoff=0):
     '''Returns the sequence positions that have a lower or equal diversity than given as threshold (n).
     Input:
           SeqLab: np array, columns represent sequence position, rows represent samples
-          n:      float,  threshold for variability report in entropy values, default=0
+          Entropy_cutoff:      float,  threshold for variability report in entropy values, default=0
     Output:
           Position_Conserved: Array, positions of low variability within the sequence length'''
 #    import pandas as pd
     import numpy as np
     
     PSEntropy = Entropy_on_Position(SeqLab)
-    Position_Conserved = np.arange(len(PSEntropy))[PSEntropy <= n]
+    Position_Conserved = np.arange(len(PSEntropy))[PSEntropy <= Entropy_cutoff]
     return Position_Conserved, PSEntropy
 
-def Sequence_Conserved_Adjusted(SeqDat, Name_Dict, n=0):
+def Sequence_Conserved_Adjusted(SeqDat, Name_Dict, Entropy_cutoff=0):
     '''Returns the dataframe with adjusted sequence length by removal of positions with low variability
     Input:
           SeqDat_current: DataFrame, From original Data, the labeled encrypted sequence column needs to be called 'Sequence_label-encrypted'
           Name_Dict:  dictionary, information on number of independent expression measurements
-          n:     Integer, sequence variability limit in percent, default=0'''
+          Entropy_cutoff:     float, threshold for variability report in entropy values, default=0'''
     import numpy as np
     
-    Position_Conserved, PSEntropy = Conserved_Sequence_Exclusion(np.array(SeqDat['Sequence_label-encrypted'].tolist()), n)
+    Position_Conserved, PSEntropy = Conserved_Sequence_Exclusion(np.array(SeqDat['Sequence_label-encrypted'].tolist()), Entropy_cutoff)
     SeqDat = SeqDat.assign(ColName=SeqDat['Sequence_label-encrypted'])
     SeqDat.rename(columns={'ColName':'Sequence_label-encrypted_full'}, inplace=True);
     SeqDat['Sequence_label-encrypted'] = list(np.delete(np.array(list(SeqDat['Sequence_label-encrypted'])),Position_Conserved, axis=1))
@@ -418,6 +442,35 @@ def Est_Grad_Feat(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter act
         
     return grid_forest #, Feature_Importance_Nucl, Feature_Importance_Eng
 
+
+def my_SVR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', AddFeat=None):
+    '''
+    My SVR code
+    '''
+    from sklearn import svm
+    from sklearn.model_selection import GroupShuffleSplit, GridSearchCV
+    import numpy as np
+
+    Sequence_Samples, Sequence_Positions, Sequence_Bases = np.array(SeqOH['OneHot'].values.tolist()).shape
+    X = np.array(SeqOH['OneHot'].values.tolist()).reshape(Sequence_Samples,Sequence_Positions*Sequence_Bases)
+    # adding rows to x for additional features
+    if AddFeat != None:
+        X = np.append(X,np.array(SeqOH[AddFeat]), axis=1)
+    Y = SeqOH[Y_Col_Name].values
+
+    groups = SeqOH['Sequence_letter-encrypted']
+    C_values = np.logspace(-3,3,15)
+    gamma_values = np.logspace(-1,np.log10(50),15)
+    param_grid = [{'C': C_values, 'gamma': gamma_values, 'kernel': ['rbf']}]
+    # Group shuffle split removes groups with identical sequences from the development set
+    # This is more realistic for parameter estimation
+    cv = GroupShuffleSplit(n_splits=Num, test_size=Validation_cutoff, random_state=42)
+
+    SVR = svm.SVR()
+    grid_SVR = GridSearchCV(SVR, param_grid, cv=cv, n_jobs=-1)
+    grid_SVR.fit(X, Y, groups)     
+    return grid_SVR
+
 def SequenceRandomizer_Parallel(RefSeq, Base_SequencePosition, n=1000):
     '''
     This function generates random sequence combinations. It takes the reference sequence and changes nucleotides at positions that have been experimentally tested. Only as much nucleotides are changed to remain within a given sequence distance.
@@ -575,6 +628,48 @@ def df_HeatMaps(Data_df, Z_Label, Plot_Save=False, Plot_File='dummy', cbar_lab=N
         plt.savefig(Plot_File, format=Fig_Type)
     plt.show()
 
+    
+    
+def generate_distances(SeqDat, Name_Dict, Hist_Type):
+    '''
+    Function to generate sequence distances.
+    
+    Input:
+        SeqDat:        dataframe, contains sequences
+        Name_Dict:     dictionary, potentially contains reference sequence
+        Hist_Type:     boolean, decision to determine sequence distance relative to all sequences (0) or to a reference sequence (1)
+    
+    Output:
+        mydist:        matrix, contains pairwise sequence distances, either to reference or to all sequences
+    '''
+    import numpy as np
+    
+    # distances are determined relative to reference
+    if Hist_Type == 1:
+        if Name_Dict['RefSeq'] is not '':
+            RefSeq = Name_Dict['RefSeq']
+            print('use reference sequence')
+        else:    
+            # using the one-hot encoding the most common nucleotide on each position is calculated.
+            Alphabet = ['A','C','G','T']
+            Pos_Nucl_Sum = np.sum(np.dstack(SeqDat['Sequence'].values), axis=2)
+            RefSeq_list = list([Alphabet[Pos_idx] for Pos_idx in np.argmax(Pos_Nucl_Sum, axis=1)])
+            RefSeq = ''.join(RefSeq_list)
+    
+        print('Distance reference sequence:', RefSeq)
+        SeqDat_wRef = list(SeqDat['Sequence_letter-encrypted'])
+        SeqDat_wRef.insert(0, RefSeq)
+
+        mydist = Sequence_Ref_DiffSum(SeqDat_wRef)
+    # distances are calculated among all sequences
+    else: 
+        print('Complete sequence distances.')
+        dist_tmp = Sequence_Dist_DiffSum(SeqDat['Sequence'].values)
+        mydist = dist_tmp[np.triu_indices(dist_tmp.shape[1], k=1)]
+    
+    return mydist
+
+    
 def my_CrossValScore(X, Y, groups, cv, ML_fun, metric):
     '''
     Function to generate statistics according to cross validation scoring
@@ -596,18 +691,3 @@ def my_CrossValScore(X, Y, groups, cv, ML_fun, metric):
     myscores = dict({'TrainR2':mytrain})
     return myscores
     
-def my_SVR(SeqOH, Y_Col_Name):
-    '''
-    My SVR code
-    '''
-    from sklearn import svm
-    import numpy as np
-
-    Sequence_Samples, Sequence_Positions, Sequence_Bases = np.array(SeqOH['OneHot'].values.tolist()).shape
-    X = np.array(SeqOH['OneHot'].values.tolist()).reshape(Sequence_Samples,Sequence_Positions*Sequence_Bases)
-    Y = SeqOH[Y_Col_Name].values
-
-    SVR = svm.SVR(C=128, kernel='rbf', gamma=24.25)
-    SVR.fit(X, Y)
-        
-    return SVR
