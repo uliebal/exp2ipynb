@@ -270,7 +270,7 @@ def Sequence_Dist_DiffSum(SeqObj):
 def Sequence_Ref_DiffSum(SeqObj):
     '''Returns the genetic sequence distance relative to the first sequence in the data-frame to all following sequences in the data list.
     Input:
-           SeqDF: list, From original Data, the sequence in conventional letter format
+           SeqObj: list, From original Data, the sequence in conventional letter format
     Output:
            PromDist: array, genetic distances as determined from the sum of difference in bases divided by total base number, i.e. max difference is 1, identical sequence =0
     '''
@@ -401,7 +401,7 @@ def Est_Grad_Save(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter act
 
     return grid_forest, Feature_Importance
 
-def Est_Grad_Feat(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', AddFeat=None):
+def MyRFR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', AddFeat=None):
     '''
     This function performs gradient search for optimal parameters with shuffle shift and stores it.
     
@@ -443,7 +443,7 @@ def Est_Grad_Feat(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter act
     return grid_forest #, Feature_Importance_Nucl, Feature_Importance_Eng
 
 
-def my_SVR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', AddFeat=None):
+def MySVR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', AddFeat=None):
     '''
     My SVR code
     '''
@@ -691,3 +691,77 @@ def my_CrossValScore(X, Y, groups, cv, ML_fun, metric):
     myscores = dict({'TrainR2':mytrain})
     return myscores
     
+
+    
+def Predict_SequenceActivity(Sequence, Name_Dict):
+    '''
+    Function to predict expression activity for single input sequence. The embedding of the input sequence in the exploratory space is tested with the sequence distance but not position diversity.
+    
+    Input:
+        Sequence:    string, sequence
+        Name_Dict:   dictionary, config information
+        
+    Output:
+        Activity:    float, expression activity for each promoter library
+    '''
+    from sklearn.preprocessing import OneHotEncoder
+    import numpy as np
+    import pandas as pd
+    import os
+    import joblib
+    import pickle
+
+    Measure_Numb = int(Name_Dict['Library_Expression'])
+    Data_Folder = Name_Dict['Data_Folder']
+    File_Base = Name_Dict['File_Base']
+    Y_Col_Name = eval(Name_Dict['Y_Col_Name'])
+    ML_Date = Name_Dict['ML_Date']
+    ML_Type = Name_Dict['ML_Regressor']
+    encoder = OneHotEncoder()
+    SeqOH = encoder.fit_transform(np.array(list_integer(Sequence)))
+    
+    # calculating GC content
+    GC_content = (Sequence.count('G')+Sequence.count('C'))/len(Sequence)
+    
+    Activity = np.empty(Measure_Numb)
+    # testing whether sequence is within exploratory space
+    SeqDF = pd.DataFrame({'Sequence_letter-encrypted': [Sequence], 'Sequence': [SeqOH.toarray()]})
+    mydist = generate_distances(SeqDF, Name_Dict, Hist_Type=1)
+    if mydist < eval(Name_Dict['Sequence_Distance_cutoff']):
+        ML_Best = dict()
+        Expr_Scaler = dict()
+        for Meas_Idx in range(Measure_Numb): 
+        #     print('loading Regressor #{}'.format(Meas_Idx))
+            Regressor_File = os.path.join(Data_Folder, '{}_{}_{}_{}-Regressor.pkl'.format(ML_Date, File_Base, Y_Col_Name[Meas_Idx].replace(' ','-'), ML_Type))
+            Parameter_File = os.path.join(Data_Folder, '{}_{}_{}_{}-Params.pkl'.format(ML_Date, File_Base, Y_Col_Name[Meas_Idx].replace(' ','-'), ML_Type))
+            ML_DictName = '{}_Regressor'.format(Y_Col_Name[Meas_Idx])
+            ML_Best[ML_DictName] = joblib.load(Regressor_File)
+            # I assume the parameters have been generated in the same run as the regressor itself and is located in the same directory following the default naming scheme
+            Data_Prep_Params = pickle.load(open(Parameter_File,'rb'))
+            # extracting the positions that were removed because of insufficient information content
+            Positions_removed = Data_Prep_Params['Positions_removed']
+            # removed positions should be identical to the reference
+            if Name_Dict['RefSeq'] is not '':
+                Sequence_relevant = ''.join((char for idx, char in enumerate(Sequence) if idx in Positions_removed))
+                Reference_relevant = ''.join((char for idx, char in enumerate(Name_Dict['RefSeq']) if idx in Positions_removed))
+                if Sequence_relevant != Reference_relevant:
+                    print('Mutations out of exploratory space')
+                    return
+            # if the data was standardized we load the corresponding function
+            if eval(Name_Dict['Data_Standard']):
+                # extracting standard scaler from existing random forest regressor
+                # The standard scaler default name is the name of the expression measurement column with suffix: '_Scaler'
+                Scaler_DictName = '{}_Scaler'.format(Y_Col_Name[Meas_Idx])
+                Expr_Scaler[Scaler_DictName] = Data_Prep_Params[Scaler_DictName]
+            X_tmp = np.hstack(np.delete(SeqOH.toarray(), Positions_removed, axis=0))
+            # adding overall GC content
+            X = np.append(X_tmp, GC_content).reshape(1,-1)
+            Activity[Meas_Idx] = ML_Best[ML_DictName].predict(X)
+            # correcting the prediction for standardized data
+            if eval(Name_Dict['Data_Standard']):
+                Activity[Meas_Idx] = Expr_Scaler[Scaler_DictName].inverse_transform(Activity[Meas_Idx].reshape(1,-1))
+    else:
+        print('Input sequence is too far from the reference sequence and cannot be reliably predicted.')
+        return
+    
+    return np.round(Activity,3)

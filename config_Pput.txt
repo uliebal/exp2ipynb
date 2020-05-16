@@ -17,15 +17,14 @@ ExprHist_File: Plot_ExpressionHist
 LogoPlot_File: Plot_Logo-FeatureImportance
 CorrPlot_File: Plot_Corr-Ytrue-VS-Ypred
 X_Expr: Plot_CrossExpr
-RFR_Params_File: RFR_training-params
-RFR_ML_File: RFR_ML-File
-RefSeq:
+ML_Regressor: RFR
 Data_Standard: False
+RefSeq: GCCCATTGACAAGGCTCTCGCGGCCAGGTATAATTGCACG
 Expression_Unit: GFP intensity
 TestRatio: .1
 Sequence_Distance_cutoff: 0.11
-Entropy_cutoff: 0.15
+Entropy_cutoff: 0.2
 Synth_Seq_MaxNumber: 5000
-SynLib_Date: 20191209
+SynLib_Date: 20200516
 Csv_ID: Synth-Library
-RFR_Date: 20200413
+ML_Date: 20200516

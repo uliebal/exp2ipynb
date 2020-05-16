@@ -1,14 +1,14 @@
 # This file contains the naming conventions for all output files. It is automatically generated when going through step "0-Workflow".
-Data_File: 20200515_PromLib_EcolPtai_Synth-Library.csv
-Library_Expression: 2
+Data_File: 20200516_Example1-Pput_Synth-Library.csv
+Library_Expression: 1
 Library_Sequence_single: True
 Sequence_column: Sequence
-Y_Col_Name: ['Ecol Promoter Activity', 'Ptai Promoter Activity']
-ID_Col_Name: Strain ID Ecol
+Y_Col_Name: ['Promoter Activity']
+ID_Col_Name: Strain ID
 Add_Feat: ['GC-content']
-Figure_Type: png
-File_Base: PromLib_EcolPtai
-Data_Folder: data-PromLib_EcolPtai
+Figure_Type: svg
+File_Base: Example1-Pput
+Data_Folder: data-Example1-Pput
 HM_File: Plot_PositionNucleotideStats
 SampSeqDist_File: Plot_SampleSequenceDistance
 Entropy_File: Plot_PositionEntropy
@@ -17,15 +17,14 @@ ExprHist_File: Plot_ExpressionHist
 LogoPlot_File: Plot_Logo-FeatureImportance
 CorrPlot_File: Plot_Corr-Ytrue-VS-Ypred
 X_Expr: Plot_CrossExpr
-RFR_Params_File: RFR_training-params
-RFR_ML_File: RFR_ML-File
-Expression_Unit: $\mu$M(GFP)/(gCDW*h)
-RefSeq: GCCCATTGACAAGGCTCTCGCGGCCAGGTATAATTGCACG
+ML_Regressor: RFR
 Data_Standard: False
+RefSeq: 
+Expression_Unit: GFP intensity
 TestRatio: .1
-Sequence_Distance_cutoff: 0.4
-Entropy_cutoff: 1.0
-Synth_Seq_MaxNumber: 10000
+Sequence_Distance_cutoff: 0.11
+Entropy_cutoff: 0.2
+Synth_Seq_MaxNumber: 5000
+SynLib_Date: 20200516
 Csv_ID: Synth-Library
-SynLib_Date: 20200321
-RFR_Date: 20200414
+ML_Date: 20200516
