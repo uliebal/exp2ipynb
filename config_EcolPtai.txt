@@ -17,8 +17,8 @@ ExprHist_File: Plot_ExpressionHist
 LogoPlot_File: Plot_Logo-FeatureImportance
 CorrPlot_File: Plot_Corr-Ytrue-VS-Ypred
 X_Expr: Plot_CrossExpr
-ML_Regressor: RFR
-Data_Standard: False
+ML_Regressor: SVR
+Data_Standard: True
 Expression_Unit: $\mu$M(GFP)/(gCDW*h)
 RefSeq: GCCCATTGACAAGGCTCTCGCGGCCAGGTATAATTGCACG
 TestRatio: .1
@@ -26,5 +26,5 @@ Sequence_Distance_cutoff: 0.4
 Entropy_cutoff: 1.0
 Synth_Seq_MaxNumber: 10000
 Csv_ID: Synth-Library
-SynLib_Date: 20200516
-ML_Date: 20200516
+SynLib_Date: 20200522
+ML_Date: 00000000

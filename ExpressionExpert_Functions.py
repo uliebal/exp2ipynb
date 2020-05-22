@@ -386,7 +386,7 @@ def Est_Grad_Save(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter act
     X = np.array(SeqOH['OneHot'].values.tolist()).reshape(Sequence_Samples,Sequence_Positions*Sequence_Bases)
     Y = SeqOH[Y_Col_Name].values
     groups = SeqOH['Sequence_letter-encrypted']
-    Number_Estimators = np.arange(20,35,1)
+    Number_Estimators = np.arange(20,50,2)
     Max_Features = np.arange(9,15,1)
     param_grid = [{'bootstrap':[False], 'n_estimators': Number_Estimators, 'max_features': Max_Features}]
     # Group shuffle split removes groups with identical sequences from the development set
@@ -421,8 +421,9 @@ def MyRFR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', 
     Y = SeqOH[Y_Col_Name].values
     groups = SeqOH['Sequence_letter-encrypted']
     Number_Estimators = np.arange(20,35,1)
-    Max_Features = np.arange(9,15,1)
-    param_grid = [{'bootstrap':[False], 'n_estimators': Number_Estimators, 'max_features': Max_Features}]
+    Max_Features = np.arange(10,30,2)
+    min_samples_split = np.arange(2,6,1)
+    param_grid = [{'bootstrap':[False], 'n_estimators': Number_Estimators, 'max_features': Max_Features, 'min_samples_split': min_samples_split}]
     # Group shuffle split removes groups with identical sequences from the development set
     # This is more realistic for parameter estimation
     cv = GroupShuffleSplit(n_splits=Num, test_size=Validation_cutoff, random_state=42)
@@ -459,8 +460,8 @@ def MySVR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', 
     Y = SeqOH[Y_Col_Name].values
 
     groups = SeqOH['Sequence_letter-encrypted']
-    C_values = np.logspace(-3,3,15)
-    gamma_values = np.logspace(-1,np.log10(50),15)
+    C_values = np.logspace(-3,3,20)
+    gamma_values = np.logspace(-3,np.log10(50),20)
     param_grid = [{'C': C_values, 'gamma': gamma_values, 'kernel': ['rbf']}]
     # Group shuffle split removes groups with identical sequences from the development set
     # This is more realistic for parameter estimation
@@ -470,6 +471,36 @@ def MySVR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', 
     grid_SVR = GridSearchCV(SVR, param_grid, cv=cv, n_jobs=-1)
     grid_SVR.fit(X, Y, groups)     
     return grid_SVR
+
+def MyGBR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', AddFeat=None):
+    '''
+    My SVR code
+    '''
+    from sklearn.ensemble import GradientBoostingRegressor
+    from sklearn.model_selection import GroupShuffleSplit, GridSearchCV
+    import numpy as np
+
+    Sequence_Samples, Sequence_Positions, Sequence_Bases = np.array(SeqOH['OneHot'].values.tolist()).shape
+    X = np.array(SeqOH['OneHot'].values.tolist()).reshape(Sequence_Samples,Sequence_Positions*Sequence_Bases)
+    # adding rows to x for additional features
+    if AddFeat != None:
+        X = np.append(X,np.array(SeqOH[AddFeat]), axis=1)
+    Y = SeqOH[Y_Col_Name].values
+
+    groups = SeqOH['Sequence_letter-encrypted']
+    Number_Estimators = np.arange(20,50,2)
+    Max_Features = np.arange(10,30,2)
+    min_samples_split = np.arange(2,6,1)
+    learning_rate = np.logspace(-3,2,10)
+    param_grid = [{'n_estimators': Number_Estimators, 'max_features': Max_Features, 'min_samples_split': min_samples_split, 'learning_rate': learning_rate}]
+    # Group shuffle split removes groups with identical sequences from the development set
+    # This is more realistic for parameter estimation
+    cv = GroupShuffleSplit(n_splits=Num, test_size=Validation_cutoff, random_state=42)
+
+    GBR = GradientBoostingRegressor()
+    grid_GBR = GridSearchCV(GBR, param_grid, cv=cv, n_jobs=-1)
+    grid_GBR.fit(X, Y, groups)     
+    return grid_GBR
 
 def SequenceRandomizer_Parallel(RefSeq, Base_SequencePosition, n=1000):
     '''
