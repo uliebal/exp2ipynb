@@ -1,53 +1,27 @@
 """
-Function collection for data manipulation.
-Basic function file for analysis of expression strength based on promoter 
-sequence. In this file simple functions and visualization is
-handled.
-
+Functions for the ExpressionExpertIpynb workflow.
 
 Author: Ulf Liebal
 Contact: ulf.liebal@rwth-aachen.de
-Date: 11/2019
+Date: 2020, May
 """
-# Data preparation
-def Data_Src_Load(Name_Dict):
-    '''
-    Data loading of Excel sheet to pandas data frame.
-    
-    Input:
-            Name_Dict:      dictionary; contains source data adress and additional information of multiple library expression measurements and multiple sequence libraries.
-    
-    Output:
-            SeqDat:           dataframe
-    '''
-    import os
-#     import tkinter as tk
-    import numpy as np
-    import pandas as pd
-#     from tkinter import filedialog
-    from ExpressionExpert_Functions import list_integer, list_onehot
-
-
-    DataPath = Name_Dict['Data_File']
-
-    SeqDat = pd.read_csv(DataPath, delimiter=',|;', engine='python')
-    if bool(Name_Dict['Library_Sequence_single']) == True:
-        Seq_Col = Name_Dict['Sequence_column']
-        SeqDat['Sequence_label-encrypted'] = list_integer(SeqDat[Seq_Col])
-        SeqDat['Sequence_letter-encrypted'] = SeqDat[Seq_Col]
-        SeqDat['Sequence'] = list_onehot(SeqDat['Sequence_label-encrypted'])
-        # GC content calculation
-        NuclSum = [np.sum(SeqDat['Sequence'][i], axis=0) for i in range(len(SeqDat))]
-        GCcont = np.sum(np.delete(np.vstack(NuclSum),[0,3],1), axis=1)/np.sum(np.vstack(NuclSum)[0])
-        SeqDat['GC-content'] = GCcont
-    else:
-        print('Multiple indepented sequence library analysis not yet supported.')
-        
-    return SeqDat
+###########################################################################
+###########################################################################
+#
+# Data preparation and system set-up
+#
+###########################################################################
+###########################################################################
 
 def make_DataDir(Name_Dict):
     '''
     Set-up of directory for data storage.
+    
+    Input:
+            Name_Dict:      dictionary; contains parameters as defined in the configuration file 'congig.txt'
+
+    Output: 
+            None
     '''
     import os
     
@@ -62,17 +36,98 @@ def make_DataDir(Name_Dict):
     except FileExistsError:
         print('Already existent data directory ', Data_Folder, '.')
 
+###########################################################################
+###########################################################################
+
+def Data_Src_Load(Name_Dict):
+    '''
+    Data loading of Excel sheet to pandas data frame. The dictionary defines the file name, and columns for sequence and expression strength. The sequence is converted into a one-hot-, label encoding (labels 0-3) and the GC-content is added. 
+    
+    Input:
+            Name_Dict:      dictionary; contains parameters as defined in the configuration file 'congig.txt'
+ 
+    Output:
+            SeqDat:         dataframe; sequence in letter, label, and one-hot format, GC-content, expression strength and sequence IDs
+    '''
+#     import os
+    import numpy as np
+    import pandas as pd
+#     from ExpressionExpert_Functions import list_integer, list_onehot
+
+    DataPath = Name_Dict['Data_File']
+    SeqDat = pd.read_csv(DataPath, delimiter=',|;', engine='python')
+
+    Seq_Col = Name_Dict['Sequence_column']
+    SeqDat['Sequence_label-encrypted'] = list_integer(SeqDat[Seq_Col])
+    SeqDat['Sequence_letter-encrypted'] = SeqDat[Seq_Col]
+    SeqDat['Sequence'] = list_onehot(SeqDat['Sequence_label-encrypted'])
+    # GC content calculation
+    NuclSum = [np.sum(SeqDat['Sequence'][i], axis=0) for i in range(len(SeqDat))]
+    GCcont = np.sum(np.delete(np.vstack(NuclSum),[0,3],1), axis=1)/np.sum(np.vstack(NuclSum)[0])
+    SeqDat['GC-content'] = GCcont
+        
+    return SeqDat
+
+###########################################################################
+###########################################################################
+
+###########################################################################
+# The following functions serve for the one-hot encoding
+# It is derived from:
+#    https://machinelearningmastery.com/how-to-one-hot-encode-sequence-data-in-python/
+def list_integer(SeqList):
+    '''
+    Integer label encryption of base letter sequence.
+    
+    Input:
+        SeqList:       list; letter sequence of nucleotide bases A,C,G,T
+        
+    Output:
+        IntegerList:   list; numerical label encryption of letters A-0, C-1, G-2, T-3
+    '''
+    alphabet = 'ACGT'
+    char_to_int = dict((c,i) for i,c in enumerate(alphabet))
+    IntegerList = list()
+    for mySeq in SeqList:    
+        # integer encode input data
+        integer_encoded = [char_to_int[char] for char in mySeq.upper()]
+        IntegerList.append(integer_encoded)
+    return IntegerList
+        
+def list_onehot(IntegerList):
+    '''
+    Generate one-hot encoding.
+    
+    Input:
+        IntegerList:    list, label encrypted sequence
+        
+    Output:
+        OneHotList:     list, one-host encoded sequence
+    '''
+    OneHotList = list()
+    for integer_encoded in IntegerList:    
+        onehot_encoded = list()
+        for value in integer_encoded:
+            letter = [0 for _ in range(4)]
+            letter[value] = 1
+            onehot_encoded.append(letter)
+        OneHotList.append(onehot_encoded)
+    return OneHotList
+
+###########################################################################
+###########################################################################
+
 def ExpressionScaler(SeqDat, Name_Dict):
     '''
     Scaling of expression values to zero mean and unit variance.
     
     Input:
-        SeqDat:     dataframe, contains data
-        Name_Dict:  dictionary, information on number of independent expression measurements
+        SeqDat:         dataframe; sequence in letter, label, and one-hot format, GC-content, expression strength and sequence IDs
+        Name_Dict:      dictionary; contains parameters as defined in the configuration file 'congig.txt'
         
      Output:
-         SeqDat:    dataframe, contains data with scaled measurements
-         Expr_Scaler: dictionary, contains the scaler functions
+         SeqDat:      dataframe; like input with added scaled measurements
+         Expr_Scaler: dictionary; contains the scaler functions
     '''
     from sklearn.preprocessing import StandardScaler
     import copy
@@ -91,41 +146,19 @@ def ExpressionScaler(SeqDat, Name_Dict):
      
     return SeqDat, Expr_Scaler
     
-# class ID_Scaler:
-#     '''
-#     Class to return the input just as a StandardScaler would. Used to harmonize the workflow with ML-approaches benefiting from standardization and those who do not.
-#     '''    
-#     def fit(self, X):
-#         return X
-#     def transform(self, X):
-#         return X
-#     def inverse_transform(self, X):
-#         return X
-    
-# def GenerateIDScaler(SeqDat, Name_Dict):
-#     '''
-#     Function to return the input just as a StandardScaler would. Used to harmonize the workflow with ML-approaches benefiting from standardization and those who do not.
-#     '''
-#     myIDScale = ID_Scaler()
-#     for idx in range(Measurement_Number):
-#         Column_Name = '{}_scaled'.format(Y_Col_Name[idx])
-#         myData = SeqDat[Y_Col_Name[idx]].values.reshape(-1, 1)
-#         SeqDat[Column_Name] = Expr_Scaler_n.fit_transform(myData)
-#         Scaler_Name = '{}_Scaler'.format(Y_Col_Name[idx])
-#         Expr_Scaler[Scaler_Name] = copy.deepcopy(Expr_Scaler_n)
-     
-#     return SeqDat, Expr_Scaler
+###########################################################################
+###########################################################################
     
 def Insert_row_(row_number, df, row_value): 
     '''
-    The function allow the insertion of rows in a dataframe. The index counting 
+    The function allows the insertion of rows in a dataframe. The index counting 
     is reversed, the last element is set to -1 and each element to the top is 
-    decrease by 1.
+    decreased by 1.
     
     Input:
-        row_number: numpy integer/vector, index from top to insert line
-        df:         pandas dataframe
-        row_value:  numpy vector/matrix, contains numbers being inserted
+        row_number: numpy integer/vector; index from top to insert line
+        df:         dataframe
+        row_value:  numpy vector/matrix; contains numbers being inserted
     '''
     import pandas as pd
     
@@ -149,17 +182,20 @@ def Insert_row_(row_number, df, row_value):
     df.index = [*range(-df.shape[0],0,1)] 
     return df
 
+###########################################################################
+###########################################################################
+    
 def split_train_test(SeqDat, test_ratio=.1):
     '''
     Data split into training and test sets, with given ratio (default 10% test)
     
     Input:
-        SeqDat:     dataframe, contains data
+        SeqDat:         dataframe; sequence in letter, label, and one-hot format, GC-content, expression strength and sequence IDs
         test_ratio: float [0,1), ratio of test data to total data
     
     Output:
-        Arg#1:      dataframe, training data
-        Arg#2:      dataframe, test data        
+        Arg#1:      dataframe; training data
+        Arg#2:      dataframe; test data        
 
     '''
     import random 
@@ -170,66 +206,29 @@ def split_train_test(SeqDat, test_ratio=.1):
     Train_Idx = np.setdiff1d(range(My_Observed), Test_Idx)
     return SeqDat.iloc[Train_Idx], SeqDat.iloc[Test_Idx]
 
-###############################################################################
-# The following functions serve for the one-hot encoding
-# It is derived from:
-#    https://machinelearningmastery.com/how-to-one-hot-encode-sequence-data-in-python/
-def list_integer(SeqList):
-    '''define input values'''
-    alphabet = 'ACGT'
-    char_to_int = dict((c,i) for i,c in enumerate(alphabet))
-    IntegerList = list()
-    for mySeq in SeqList:    
-        # integer encode input data
-        integer_encoded = [char_to_int[char] for char in mySeq.upper()]
-        IntegerList.append(integer_encoded)
-    return IntegerList
-        
-def list_onehot(IntegerList):
-    OneHotList = list()
-    for integer_encoded in IntegerList:    
-        onehot_encoded = list()
-        for value in integer_encoded:
-            letter = [0 for _ in range(4)]
-            letter[value] = 1
-            onehot_encoded.append(letter)
-        OneHotList.append(onehot_encoded)
-    return OneHotList
+    
+###########################################################################
+###########################################################################
+#
+# Data analysis and synthetic library
+#
+###########################################################################
+###########################################################################
 
-def list_sequence(IntegerList):
-    '''define input values'''
-    import numpy as np
-    alphabet = 'ACGT'
-    int_to_char = dict((i,c) for i,c in enumerate(alphabet))
-    SequenceList = list()
-    for IntRow in IntegerList:    
-        # integer encode input data
-        sequence_encoded = [int_to_char[int(myint)] for myint in np.nditer(IntRow)]
-        SequenceList.append(sequence_encoded)
-    return SequenceList
-    
-###############################################################################
 # General function to identify conserved sequences
-def Conserved_Sequence_Exclusion(SeqLab, Entropy_cutoff=0):
-    '''Returns the sequence positions that have a lower or equal diversity than given as threshold (n).
-    Input:
-          SeqLab: np array, columns represent sequence position, rows represent samples
-          Entropy_cutoff:      float,  threshold for variability report in entropy values, default=0
-    Output:
-          Position_Conserved: Array, positions of low variability within the sequence length'''
-#    import pandas as pd
-    import numpy as np
-    
-    PSEntropy = Entropy_on_Position(SeqLab)
-    Position_Conserved = np.arange(len(PSEntropy))[PSEntropy <= Entropy_cutoff]
-    return Position_Conserved, PSEntropy
 
 def Sequence_Conserved_Adjusted(SeqDat, Name_Dict, Entropy_cutoff=0):
-    '''Returns the dataframe with adjusted sequence length by removal of positions with low variability
+    '''
+    Adjusting sequence length by removal of positions with low variability
+    
     Input:
-          SeqDat_current: DataFrame, From original Data, the labeled encrypted sequence column needs to be called 'Sequence_label-encrypted'
-          Name_Dict:  dictionary, information on number of independent expression measurements
-          Entropy_cutoff:     float, threshold for variability report in entropy values, default=0'''
+        SeqDat:         dataframe; sequence in letter, label, and one-hot format, GC-content, expression strength and sequence IDs
+        Name_Dict:      dictionary; contains parameters as defined in the configuration file 'congig.txt'
+        Entropy_cutoff: float; threshold for variability report in entropy values, default=0
+        
+    Output:
+        SeqDat:          dataframe; like input with sequences shortened by non-informative positions
+    '''
     import numpy as np
     
     Position_Conserved, PSEntropy = Conserved_Sequence_Exclusion(np.array(SeqDat['Sequence_label-encrypted'].tolist()), Entropy_cutoff)
@@ -240,16 +239,37 @@ def Sequence_Conserved_Adjusted(SeqDat, Name_Dict, Entropy_cutoff=0):
     
     return SeqDat, Position_Conserved, PSEntropy
 
+def Conserved_Sequence_Exclusion(SeqLab, Entropy_cutoff=0):
+    '''
+    Returns the sequence positions that have a lower or equal diversity than given as entropy threshold.
+    
+    Input:
+          SeqLab:              np-array; columns represent sequence position, rows represent samples
+          Entropy_cutoff:      float; threshold for variability report in entropy values, default=0
+          
+    Output:
+          Position_Conserved:  np-array; positions of low variability within the sequence length
+     '''
+#    import pandas as pd
+    import numpy as np
+    
+    PSEntropy = Entropy_on_Position(SeqLab)
+    Position_Conserved = np.arange(len(PSEntropy))[PSEntropy <= Entropy_cutoff]
+    
+    return Position_Conserved, PSEntropy
 
-
-###############################################################################
+###########################################################################
+###########################################################################
 
 def Sequence_Dist_DiffSum(SeqObj):
-    '''Returns the genetic sequence distance all sequences in the data list.
+    '''
+    Returns the genetic sequence distance all sequences in the data list. The distance is determined from the sum of difference in bases divided by total base number, i.e. max difference is 1, identical sequence is 0.
+    
     Input:
-           SeqDF: list, From original Data, the sequence in conventional letter format
+         SeqObj:             list; From original Data, the sequence in conventional letter format
+         
     Output:
-           PromDist_SymMatrix: list object, genetic distances as determined from the sum of difference in bases divided by total base number, i.e. max difference is 1, identical sequence =0
+         PromDist_SymMatrix: np-array; genetic distances
     '''
     import numpy as np
 
@@ -267,12 +287,18 @@ def Sequence_Dist_DiffSum(SeqObj):
 
     return PromDist_SymMatrix
 
+###########################################################################
+###########################################################################
+
 def Sequence_Ref_DiffSum(SeqObj):
-    '''Returns the genetic sequence distance relative to the first sequence in the data-frame to all following sequences in the data list.
+    '''
+    Returns the genetic sequence distance relative to the first sequence in the data-frame to all following sequences in the data list. The distance is determined from the sum of difference in bases divided by total base number, i.e. max difference is 1, identical sequence is 0.
+    
     Input:
-           SeqObj: list, From original Data, the sequence in conventional letter format
+           SeqObj: list; From original Data, the sequence in conventional letter format
+           
     Output:
-           PromDist: array, genetic distances as determined from the sum of difference in bases divided by total base number, i.e. max difference is 1, identical sequence =0
+           PromDist: np-array; genetic distances 
     '''
     import numpy as np
 
@@ -284,14 +310,18 @@ def Sequence_Ref_DiffSum(SeqObj):
     
     return np.array(PromDist)
 
+###########################################################################
+###########################################################################
+
 def Find_Near_Seq(SeqTest, SeqRef):
     '''
     Identifies the closes Reference sequence to a test sequence
     
-    Input:      SeqTest:    string sequence
-                SeqRef:     string array
+    Input:      SeqTest:      string; single sequence
+                SeqRef:       list; array
     
-    Output:     SeqTarget:  string sequence from reference with closest distance to test
+    Output:     SeqTarget:    string; sequence from reference with closest distance to test
+                SeqClost_Idx: integer; id of the closes sequence to test
     '''
     import numpy as np
     
@@ -312,9 +342,22 @@ def Find_Near_Seq(SeqTest, SeqRef):
     
     return SeqTarget, SeqClose_Idx
 
+###########################################################################
+###########################################################################
+
 def Extract_MultLibSeq(SeqDat, Target, Seq_Numb, Y_Col_Name):
     '''
-    finding the closest measured samples in experimental library to the target expression 
+    Finding the closest measured samples in experimental library to the target expression 
+    
+    Input:
+        SeqDat:      dataframe; sequence in letter, label, and one-hot format, GC-content, expression strength and sequence IDs
+        Target:      np-array; target expression strength
+        Y_Col_Name:  string; name of expression strength column
+      
+    Output:
+        SeqObj:      list; sequences close to target expression
+        Target_lst:  list; indices of close sequences to target expression
+    
     '''
     import numpy as np
     
@@ -349,16 +392,19 @@ def Extract_MultLibSeq(SeqDat, Target, Seq_Numb, Y_Col_Name):
     
     return SeqObj, Target_lst
 
+###########################################################################
+###########################################################################
+
 # Entropy calculation
 def Entropy_on_Position(PSArray):
     '''
     Analysis of position specific entropy. 
     
     Input: 
-        PSArray: np array, columns represent sequence position, rows represent samples
+        PSArray:   np array; columns represent sequence position, rows represent samples
         
     Output:
-        PSEntropy: np vector, entropy of each sequence position
+        PSEntropy: np vector; entropy of each sequence position
     '''
     import numpy as np
     from scipy.stats import entropy
@@ -370,47 +416,30 @@ def Entropy_on_Position(PSArray):
         
     return np.array(PSEntropy)
 
-def Est_Grad_Save(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity'):
-    '''
-    This function performs gradient search for optimal parameters with shuffle shift and stores it.
-    
-    Input:
-        DataArray
-    '''
-    from sklearn.ensemble import RandomForestRegressor
-    from sklearn.model_selection import GroupShuffleSplit, GridSearchCV
-#    from sklearn.metrics import r2_score
-    import numpy as np
-
-    Sequence_Samples, Sequence_Positions, Sequence_Bases = np.array(SeqOH['OneHot'].values.tolist()).shape
-    X = np.array(SeqOH['OneHot'].values.tolist()).reshape(Sequence_Samples,Sequence_Positions*Sequence_Bases)
-    Y = SeqOH[Y_Col_Name].values
-    groups = SeqOH['Sequence_letter-encrypted']
-    Number_Estimators = np.arange(20,50,2)
-    Max_Features = np.arange(9,15,1)
-    param_grid = [{'bootstrap':[False], 'n_estimators': Number_Estimators, 'max_features': Max_Features}]
-    # Group shuffle split removes groups with identical sequences from the development set
-    # This is more realistic for parameter estimation
-    cv = GroupShuffleSplit(n_splits=Num, test_size=Validation_cutoff, random_state=42)
-
-    forest_grid = RandomForestRegressor()
-    grid_forest = GridSearchCV(forest_grid, param_grid, cv=cv, n_jobs=-1)
-    grid_forest.fit(X, Y, groups)
-    
-    Feature_Importance = np.array(grid_forest.best_estimator_.feature_importances_).reshape(-1,4)
-
-    return grid_forest, Feature_Importance
+###########################################################################
+###########################################################################
+#
+# Regression functions
+#
+###########################################################################
+###########################################################################
 
 def MyRFR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', AddFeat=None):
     '''
-    This function performs gradient search for optimal parameters with shuffle shift and stores it.
+    This function trains a random forest regressor and performs gradient search for optimal parameters with group shuffle shift.
     
     Input:
-        DataArray
+        SeqOH:             dataframe; sequence in letter, label, and one-hot format, GC-content, expression strength and sequence IDs
+        Validation_cutoff: float; ratio of cross-validation train and test sets
+        Num:               integer; number of validation splits performed
+        Y_Col_Name:        string; name of expression strength column
+        AddFeat:           string; name of additional feature, typically GC-content
+        
+    Output:
+        grid_forest:       function; regressor 
     '''
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.model_selection import GroupShuffleSplit, GridSearchCV
-#    from sklearn.metrics import r2_score
     import numpy as np
 
     Sequence_Samples, Sequence_Positions, Sequence_Bases = np.array(SeqOH['OneHot'].values.tolist()).shape
@@ -420,9 +449,9 @@ def MyRFR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', 
         X = np.append(X,np.array(SeqOH[AddFeat]), axis=1)
     Y = SeqOH[Y_Col_Name].values
     groups = SeqOH['Sequence_letter-encrypted']
-    Number_Estimators = np.arange(20,35,1)
+    Number_Estimators = np.arange(20,40,2)
     Max_Features = np.arange(10,30,2)
-    min_samples_split = np.arange(2,6,1)
+    min_samples_split = np.arange(2,4,1)
     param_grid = [{'bootstrap':[False], 'n_estimators': Number_Estimators, 'max_features': Max_Features, 'min_samples_split': min_samples_split}]
     # Group shuffle split removes groups with identical sequences from the development set
     # This is more realistic for parameter estimation
@@ -431,50 +460,25 @@ def MyRFR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', 
     forest_grid = RandomForestRegressor()
     grid_forest = GridSearchCV(forest_grid, param_grid, cv=cv, n_jobs=-1)
     grid_forest.fit(X, Y, groups)
-    
-#     # remember to extract the features before rearranging the feature importance to a sequence position matrix form
-#     if AddFeat != None:
-#         Feat_num = len(AddFeat)
-#         Feature_Importance_Nucl = np.array(grid_forest.best_estimator_.feature_importances_[0:-Feat_num]).reshape(-1,4)
-#         Feature_Importance_Eng = grid_forest.best_estimator_.feature_importances_[-Feat_num]
-#     else:
-#         Feature_Importance_Nucl = np.array(grid_forest.best_estimator_.feature_importances_).reshape(-1,4)
-#         Feature_Importance_Eng = []
-        
-    return grid_forest #, Feature_Importance_Nucl, Feature_Importance_Eng
+           
+    return grid_forest
 
-
-def MySVR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', AddFeat=None):
-    '''
-    My SVR code
-    '''
-    from sklearn import svm
-    from sklearn.model_selection import GroupShuffleSplit, GridSearchCV
-    import numpy as np
-
-    Sequence_Samples, Sequence_Positions, Sequence_Bases = np.array(SeqOH['OneHot'].values.tolist()).shape
-    X = np.array(SeqOH['OneHot'].values.tolist()).reshape(Sequence_Samples,Sequence_Positions*Sequence_Bases)
-    # adding rows to x for additional features
-    if AddFeat != None:
-        X = np.append(X,np.array(SeqOH[AddFeat]), axis=1)
-    Y = SeqOH[Y_Col_Name].values
-
-    groups = SeqOH['Sequence_letter-encrypted']
-    C_values = np.logspace(-3,3,20)
-    gamma_values = np.logspace(-3,np.log10(50),20)
-    param_grid = [{'C': C_values, 'gamma': gamma_values, 'kernel': ['rbf']}]
-    # Group shuffle split removes groups with identical sequences from the development set
-    # This is more realistic for parameter estimation
-    cv = GroupShuffleSplit(n_splits=Num, test_size=Validation_cutoff, random_state=42)
-
-    SVR = svm.SVR()
-    grid_SVR = GridSearchCV(SVR, param_grid, cv=cv, n_jobs=-1)
-    grid_SVR.fit(X, Y, groups)     
-    return grid_SVR
+###########################################################################
+###########################################################################
 
 def MyGBR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', AddFeat=None):
     '''
-    My SVR code
+    This function trains a gradient boosting regressor and performs gradient search for optimal parameters with group shuffle shift.
+    
+    Input:
+        SeqOH:             dataframe; sequence in letter, label, and one-hot format, GC-content, expression strength and sequence IDs
+        Validation_cutoff: float; ratio of cross-validation train and test sets
+        Num:               integer; number of validation splits performed
+        Y_Col_Name:        string; name of expression strength column
+        AddFeat:           string; name of additional feature, typically GC-content
+        
+    Output:
+        grid_GBR:       function; regressor 
     '''
     from sklearn.ensemble import GradientBoostingRegressor
     from sklearn.model_selection import GroupShuffleSplit, GridSearchCV
@@ -499,8 +503,54 @@ def MyGBR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', 
 
     GBR = GradientBoostingRegressor()
     grid_GBR = GridSearchCV(GBR, param_grid, cv=cv, n_jobs=-1)
-    grid_GBR.fit(X, Y, groups)     
+    grid_GBR.fit(X, Y, groups)   
+    
     return grid_GBR
+
+###########################################################################
+###########################################################################
+
+def MySVR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', AddFeat=None):
+    '''
+    This function trains a support vector regressor and performs gradient search for optimal parameters with group shuffle shift.
+    
+    Input:
+        SeqOH:             dataframe; sequence in letter, label, and one-hot format, GC-content, expression strength and sequence IDs
+        Validation_cutoff: float; ratio of cross-validation train and test sets
+        Num:               integer; number of validation splits performed
+        Y_Col_Name:        string; name of expression strength column
+        AddFeat:           string; name of additional feature, typically GC-content
+        
+    Output:
+        grid_SVR:       function; regressor 
+    '''
+    from sklearn import svm
+    from sklearn.model_selection import GroupShuffleSplit, GridSearchCV
+    import numpy as np
+
+    Sequence_Samples, Sequence_Positions, Sequence_Bases = np.array(SeqOH['OneHot'].values.tolist()).shape
+    X = np.array(SeqOH['OneHot'].values.tolist()).reshape(Sequence_Samples,Sequence_Positions*Sequence_Bases)
+    # adding rows to x for additional features
+    if AddFeat != None:
+        X = np.append(X,np.array(SeqOH[AddFeat]), axis=1)
+    Y = SeqOH[Y_Col_Name].values
+
+    groups = SeqOH['Sequence_letter-encrypted']
+    C_values = np.logspace(-3,3,20)
+    gamma_values = np.logspace(-3,np.log10(50),20)
+    param_grid = [{'C': C_values, 'gamma': gamma_values, 'kernel': ['rbf']}]
+    # Group shuffle split removes groups with identical sequences from the development set
+    # This is more realistic for parameter estimation
+    cv = GroupShuffleSplit(n_splits=Num, test_size=Validation_cutoff, random_state=42)
+
+    SVR = svm.SVR()
+    grid_SVR = GridSearchCV(SVR, param_grid, cv=cv, n_jobs=-1)
+    grid_SVR.fit(X, Y, groups)     
+    
+    return grid_SVR
+
+###########################################################################
+###########################################################################
 
 def SequenceRandomizer_Parallel(RefSeq, Base_SequencePosition, n=1000):
     '''

@@ -1,14 +1,14 @@
 # This file contains the naming conventions for all output files. It is automatically generated when going through step "0-Workflow".
-Data_File: 20200516_Example1-Pput_Synth-Library.csv
-Library_Expression: 1
+Data_File: 20200523_Spacer_all_Synth-Library.csv
+Library_Expression: 2
 Library_Sequence_single: True
-Sequence_column: Sequence
-Y_Col_Name: ['Promoter Activity']
-ID_Col_Name: Strain ID
+Sequence_column: Spacer
+Y_Col_Name: ['Ecol-Activity', 'Ptai-Activity']
+ID_Col_Name: Strain ID Ecol
 Add_Feat: ['GC-content']
-Figure_Type: svg
-File_Base: Example1-Pput
-Data_Folder: data-Example1-Pput
+Figure_Type: png
+File_Base: Spacer_all
+Data_Folder: data-XHost_Replicates_Seq+Spacer
 HM_File: Plot_PositionNucleotideStats
 SampSeqDist_File: Plot_SampleSequenceDistance
 Entropy_File: Plot_PositionEntropy
@@ -19,12 +19,12 @@ CorrPlot_File: Plot_Corr-Ytrue-VS-Ypred
 X_Expr: Plot_CrossExpr
 ML_Regressor: RFR
 Data_Standard: False
+Expression_Unit: $\mu$M(GFP)/(gCDW*h)
 RefSeq: 
-Expression_Unit: GFP intensity
-TestRatio: .1
-Sequence_Distance_cutoff: 0.11
+TestRatio: 0.1
+Sequence_Distance_cutoff: 0.9
 Entropy_cutoff: 0.2
-Synth_Seq_MaxNumber: 5000
-SynLib_Date: 20200516
+Synth_Seq_MaxNumber: 10000
 Csv_ID: Synth-Library
-ML_Date: 20200516
+SynLib_Date: 20200214
+ML_Date: 20200523

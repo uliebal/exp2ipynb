@@ -14,7 +14,7 @@ SampSeqDist_File: Plot_SampleSequenceDistance
 Entropy_File: Plot_PositionEntropy
 SamplingDiv_File: Plot_SamplingDiversity
 ExprHist_File: Plot_ExpressionHist
-LogoPlot_File: Plot_Logo-FeatureImportance
+LogoPlot_File: Plot_Logo-FI
 CorrPlot_File: Plot_Corr-Ytrue-VS-Ypred
 X_Expr: Plot_CrossExpr
 ML_Regressor: SVR

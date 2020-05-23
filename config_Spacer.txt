@@ -16,15 +16,15 @@ SamplingDiv_File: Plot_SamplingDiversity
 ExprHist_File: Plot_ExpressionHist
 LogoPlot_File: Plot_Logo-FeatureImportance
 CorrPlot_File: Plot_Corr-Ytrue-VS-Ypred
-Csv_ID: Synth-Library
 X_Expr: Plot_CrossExpr
-RefSeq: 
-SynLib_Date: 20200214
-RFR_Date: 20200413
-TestRatio: 0.1
-RFR_Params_File: RFR_training-params
-RFR_ML_File: RFR_ML-File
+ML_Regressor: RFR
+Data_Standard: False
 Expression_Unit: $\mu$M(GFP)/(gCDW*h)
-Sequence_Distance_cutoff: 0.11
-Position_Diversity_cutoff: 0.2
+RefSeq: 
+TestRatio: 0.1
+Sequence_Distance_cutoff: 0.9
+Entropy_cutoff: 0.2
 Synth_Seq_MaxNumber: 10000
+Csv_ID: Synth-Library
+SynLib_Date: 20200523
+ML_Date: 20200523

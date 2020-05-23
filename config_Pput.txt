@@ -6,7 +6,7 @@ Sequence_column: Sequence
 Y_Col_Name: ['Promoter Activity']
 ID_Col_Name: Strain ID
 Add_Feat: ['GC-content']
-Figure_Type: svg
+Figure_Type: png
 File_Base: Example1-Pput
 Data_Folder: data-Example1-Pput
 HM_File: Plot_PositionNucleotideStats
@@ -14,7 +14,7 @@ SampSeqDist_File: Plot_SampleSequenceDistance
 Entropy_File: Plot_PositionEntropy
 SamplingDiv_File: Plot_SamplingDiversity
 ExprHist_File: Plot_ExpressionHist
-LogoPlot_File: Plot_Logo-FeatureImportance
+LogoPlot_File: Plot_Logo-FI
 CorrPlot_File: Plot_Corr-Ytrue-VS-Ypred
 X_Expr: Plot_CrossExpr
 ML_Regressor: RFR
@@ -27,4 +27,4 @@ Entropy_cutoff: 0.2
 Synth_Seq_MaxNumber: 5000
 SynLib_Date: 20200516
 Csv_ID: Synth-Library
-ML_Date: 20200516
+ML_Date: 00000000
