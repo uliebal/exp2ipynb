@@ -5,6 +5,9 @@ Library_Sequence_single: True
 Sequence_column: Sequence
 Y_Col_Name: ['Ecol Promoter Activity', 'Ptai Promoter Activity']
 ID_Col_Name: Strain ID Ecol
+Stats2Samples: False
+Stats_Std:
+Stats_Samples:
 Add_Feat: ['GC-content']
 Figure_Type: png
 File_Base: PromLib_EcolPtai

@@ -5,6 +5,9 @@ Library_Sequence_single: True
 Sequence_column: Sequence
 Y_Col_Name: ['Promoter Activity']
 ID_Col_Name: Strain ID
+Stats2Samples: False
+Stats_Std:
+Stats_Samples:
 Add_Feat: ['GC-content']
 Figure_Type: png
 File_Base: Example1-Pput

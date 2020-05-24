@@ -55,9 +55,13 @@ def Data_Src_Load(Name_Dict):
 #     from ExpressionExpert_Functions import list_integer, list_onehot
 
     DataPath = Name_Dict['Data_File']
-    SeqDat = pd.read_csv(DataPath, delimiter=',|;', engine='python')
-
     Seq_Col = Name_Dict['Sequence_column']
+    SeqDat = pd.read_csv(DataPath, delimiter=',|;', engine='python')
+    # decision whether additional data is generated from statistics, this requires mean standard deviation and sample size
+    Stats2Samples = eval(Name_Dict['Stats2Samples'])
+    if Stats2Samples:
+        SeqDat = SeqDat_StatsExpand(SeqDat, Name_Dict)
+    
     SeqDat['Sequence_label-encrypted'] = list_integer(SeqDat[Seq_Col])
     SeqDat['Sequence_letter-encrypted'] = SeqDat[Seq_Col]
     SeqDat['Sequence'] = list_onehot(SeqDat['Sequence_label-encrypted'])
@@ -184,7 +188,72 @@ def Insert_row_(row_number, df, row_value):
 
 ###########################################################################
 ###########################################################################
+
+def SeqDat_StatsExpand(SeqDat, Name_Dict):
+    '''
+    Generates separate samples from statistical information including mean, standard deviation and sample size.
+
+        SeqDat:         dataframe; sequence in letter, label, and one-hot format, GC-content, expression strength and sequence IDs
+        Name_Dict:      dictionary; contains parameters as defined in the configuration file 'congig.txt'
+        
+     Output:
+        SeqDat_new:         dataframe; like input, but the original measurements are overwritten with separate samples from statistics
+    '''
+    import pandas as pd
+    import numpy as np
     
+    SeqDat_new = pd.DataFrame()
+    ID_Col_Name = Name_Dict['ID_Col_Name']
+    Sequence_column = Name_Dict['Sequence_column']
+    Y_Col_Name = eval(Name_Dict['Y_Col_Name'])
+    Stats_Std = eval(Name_Dict['Stats_Std'])
+    for index, row in SeqDat.iterrows():
+        myID = row[ID_Col_Name]
+        mySeq = row[Sequence_column]
+        Sample_number = min(row[eval(Name_Dict['Stats_Samples'])])
+        Target_mean = [row[Y_Name] for Y_Name in Y_Col_Name]
+        Target_std = [row[Std] for Std in Stats_Std]
+        Sample_array = [stats2samples(mymean, mystd, mysamples) for mymean, mystd, mysamples in zip(Target_mean, Target_std, np.tile(Sample_number,(len(Y_Col_Name),1)))]
+        for MySample in zip(*Sample_array):
+            data = zip(list([ID_Col_Name]) + list([Sequence_column]) + Y_Col_Name, np.hstack([myID,mySeq,MySample]))
+            SeqDat_new = SeqDat_new.append(dict(data), ignore_index=True)
+
+    # correcting data types
+    dtypes = dict(zip(Y_Col_Name, ['float64']*len(Y_Col_Name)))
+    SeqDat_new = SeqDat_new.astype(dtypes)
+    
+    return SeqDat_new
+
+def stats2samples(Target_mean, Target_std, Target_num=2):
+    '''
+    synthetic data generation based on information on mean, standard deviation, and sample size samples generated based on normal random number distribution 
+    reference here: 
+    https://stackoverflow.com/questions/51515423/generate-sample-data-with-an-exact-mean-and-standard-deviation
+    
+    Input:   
+        Target_mean:    float; arithmetic mean of samples
+        Target_std:     float; standard deviation of samples
+        Target_num:     integer; number of samples to generate, default 2
+    '''
+    import numpy as np
+    
+    myx = np.random.normal(loc=Target_mean, scale=Target_std, size=Target_num)
+    zeromean_data = (myx - np.mean(myx))
+    zeromean_mean = np.mean(zeromean_data)
+    zeromean_std = np.std(zeromean_data)
+    scaled_data = zeromean_data * (Target_std/zeromean_std)
+    scaled_mean = np.mean(scaled_data)
+    scaled_std = np.std(scaled_data)
+    final_data = scaled_data + Target_mean
+#     final_mean = np.mean(final_data)
+#     final_std = np.std(final_data)
+    
+    return final_data
+    # 
+
+###########################################################################
+###########################################################################
+
 def split_train_test(SeqDat, test_ratio=.1):
     '''
     Data split into training and test sets, with given ratio (default 10% test)
@@ -231,10 +300,13 @@ def Sequence_Conserved_Adjusted(SeqDat, Name_Dict, Entropy_cutoff=0):
     '''
     import numpy as np
     
+    # Position_Conserved represents position for which only a single nucleotide was measured, and thus no diversity/information exists
     Position_Conserved, PSEntropy = Conserved_Sequence_Exclusion(np.array(SeqDat['Sequence_label-encrypted'].tolist()), Entropy_cutoff)
-    SeqDat = SeqDat.assign(ColName=SeqDat['Sequence_label-encrypted'])
-    SeqDat.rename(columns={'ColName':'Sequence_label-encrypted_full'}, inplace=True);
-    SeqDat['Sequence_label-encrypted'] = list(np.delete(np.array(list(SeqDat['Sequence_label-encrypted'])),Position_Conserved, axis=1))
+    # if there are positions without information in Position_Conserved they are deleted
+    if bool(Position_Conserved.size):
+        SeqDat = SeqDat.assign(ColName=SeqDat['Sequence_label-encrypted'])
+        SeqDat.rename(columns={'ColName':'Sequence_label-encrypted_full'}, inplace=True);
+        SeqDat['Sequence_label-encrypted'] = list(np.delete(np.array(list(SeqDat['Sequence_label-encrypted'])),Position_Conserved, axis=1))
     SeqDat['OneHot'] = list_onehot(SeqDat['Sequence_label-encrypted'])
     
     return SeqDat, Position_Conserved, PSEntropy
@@ -559,7 +631,7 @@ def SequenceRandomizer_Parallel(RefSeq, Base_SequencePosition, n=1000):
     import numpy as np
     import multiprocessing
     from joblib import Parallel, delayed
-    from ExpressionExpert_Functions import SequenceRandomizer_Single
+#     from ExpressionExpert_Functions import SequenceRandomizer_Single
     
     num_cores = multiprocessing.cpu_count()
     use_core = min([num_cores, n])

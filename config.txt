@@ -1,14 +1,16 @@
 # This file contains the naming conventions for all output files. It is automatically generated when going through step "0-Workflow".
-Data_File: meng.csv
-Library_Sequence_single: True
-Sequence_column: Sequence
-Y_Col_Name: ['Activity']
-ID_Col_Name: Sequence-ID
-Library_Expression: 1
+Data_File: Geobacillus_Love.csv
+Sequence_column: DNA Sequence
+Y_Col_Name: ['GFP mean', 'mOrange mean']
+ID_Col_Name: Promoter number
+Stats2Samples: True
+Stats_Std: ['GFP StDev', 'mOrange StDev']
+Stats_Samples: ['GFP N', 'mOrange N']
+Library_Expression: 2
 Add_Feat: ['GC-content']
 Figure_Type: png
-File_Base: meng
-Data_Folder: data-meng
+File_Base: Geobacillus_Love
+Data_Folder: data-Geobacillus_Love
 HM_File: Plot_PositionNucleotideStats
 SampSeqDist_File: Plot_SampleSequenceDistance
 Entropy_File: Plot_PositionEntropy
@@ -19,12 +21,12 @@ CorrPlot_File: Plot_Corr-Ytrue-VS-Ypred
 Csv_ID: Synth-Library
 X_Expr: Plot_CrossExpr
 RefSeq: 
-ML_Regressor: RFR
+ML_Regressor: GBR
 Data_Standard: False
-SynLib_Date: 20200523
-ML_Date: 20200523
+SynLib_Date: 20200524
+ML_Date: 20200524
 TestRatio: 0.1
 Expression_Unit: relative-strength
 Sequence_Distance_cutoff: 0.11
-Entropy_cutoff: 0.75
+Entropy_cutoff: 0.2
 Synth_Seq_MaxNumber: 10000
