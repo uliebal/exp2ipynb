@@ -564,9 +564,9 @@ def MyGBR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', 
     Y = SeqOH[Y_Col_Name].values
 
     groups = SeqOH['Sequence_letter-encrypted']
-    Number_Estimators = np.arange(20,50,2)
+    Number_Estimators = np.arange(20,40,2)
     Max_Features = np.arange(10,30,2)
-    min_samples_split = np.arange(2,6,1)
+    min_samples_split = np.arange(2,4,1)
     learning_rate = np.logspace(-3,2,10)
     param_grid = [{'n_estimators': Number_Estimators, 'max_features': Max_Features, 'min_samples_split': min_samples_split, 'learning_rate': learning_rate}]
     # Group shuffle split removes groups with identical sequences from the development set
@@ -609,7 +609,7 @@ def MySVR(SeqOH, Validation_cutoff=.1, Num=100, Y_Col_Name='promoter activity', 
 
     groups = SeqOH['Sequence_letter-encrypted']
     C_values = np.logspace(-3,3,20)
-    gamma_values = np.logspace(-3,np.log10(50),20)
+    gamma_values = np.logspace(-3,1,20)
     param_grid = [{'C': C_values, 'gamma': gamma_values, 'kernel': ['rbf']}]
     # Group shuffle split removes groups with identical sequences from the development set
     # This is more realistic for parameter estimation
@@ -639,6 +639,9 @@ def SequenceRandomizer_Parallel(RefSeq, Base_SequencePosition, n=1000):
     Result = Parallel(n_jobs=use_core)(delayed(SequenceRandomizer_Single)(RefSeq, Base_SequencePosition) for idx in range(n))
 
     return Result # Sequence_multiple
+
+###########################################################################
+###########################################################################
 
 def SequenceRandomizer_Single(RefSeq, Base_SequencePosition):
     
@@ -684,8 +687,12 @@ def SequenceRandomizer_Single(RefSeq, Base_SequencePosition):
     
     return Sequence_Single
 
-###############################################################################
+###########################################################################
+###########################################################################
 # visualization
+###########################################################################
+###########################################################################
+
 def ExpressionStrength_HeatMap(SeqList, Y_Col_Name = 'promoter activity'):
     '''
     Calculating the base and position specific average expression strength.
@@ -709,6 +716,9 @@ def ExpressionStrength_HeatMap(SeqList, Y_Col_Name = 'promoter activity'):
     Expression_HeatMap_df = pd.DataFrame(Expr_OneHot_mean_ar.reshape(-1,4), columns=['A','C','G','T'])
     return Expression_HeatMap_df
 
+###########################################################################
+###########################################################################
+
 def ExpressionVariation_HeatMap(SeqList, Y_Col_Name = 'promoter activity'):
     '''
     Calculating the base and position specific variation of expression strength.
@@ -731,6 +741,9 @@ def ExpressionVariation_HeatMap(SeqList, Y_Col_Name = 'promoter activity'):
     Expr_OneHot_var_ar[Expr_OneHot_var_ar==0.] = np.nan
     Expression_HeatMap_df = pd.DataFrame(Expr_OneHot_var_ar.reshape(-1,4), columns=['A','C','G','T'])
     return Expression_HeatMap_df
+
+###########################################################################
+###########################################################################
 
 def df_HeatMaps(Data_df, Z_Label, Plot_Save=False, Plot_File='dummy', cbar_lab=None):
     '''
@@ -781,8 +794,9 @@ def df_HeatMaps(Data_df, Z_Label, Plot_Save=False, Plot_File='dummy', cbar_lab=N
         plt.savefig(Plot_File, format=Fig_Type)
     plt.show()
 
-    
-    
+###########################################################################
+###########################################################################
+       
 def generate_distances(SeqDat, Name_Dict, Hist_Type):
     '''
     Function to generate sequence distances.
@@ -822,6 +836,8 @@ def generate_distances(SeqDat, Name_Dict, Hist_Type):
     
     return mydist
 
+###########################################################################
+###########################################################################
     
 def my_CrossValScore(X, Y, groups, cv, ML_fun, metric):
     '''
@@ -844,7 +860,8 @@ def my_CrossValScore(X, Y, groups, cv, ML_fun, metric):
     myscores = dict({'TrainR2':mytrain})
     return myscores
     
-
+###########################################################################
+###########################################################################
     
 def Predict_SequenceActivity(Sequence, Name_Dict):
     '''

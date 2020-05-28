@@ -1,13 +1,7 @@
 .ipynb_checkpoints/
 __pycache__/
 '=0.3.3'
-data-20200116_PromLib_EcolPtai_Synth-Library/
-data-Example1-Pput/
-data-meng/
-data-PromLib_EcolPtai/
-data-VLB120_Spacer/
-data-XHost_AvgStats/
-data-XHost_Replicates_Seq+Spacer/
+data-*
 Till_Data/
 *.xlsx
 20*.csv
