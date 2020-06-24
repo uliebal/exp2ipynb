@@ -1,13 +1,12 @@
 # This file contains the naming conventions for all output files. It is automatically generated when going through step "0-Workflow".
 Data_File: PromLib_EcolPtai.csv
-Library_Expression: 2
-Library_Sequence_single: True
 Sequence_column: Sequence
 Y_Col_Name: ['Ecol Promoter Activity', 'Ptai Promoter Activity']
 ID_Col_Name: Strain ID Ecol
 Stats2Samples: False
 Stats_Std:
 Stats_Samples:
+Library_Expression: 2
 Add_Feat: ['GC-content']
 Figure_Type: png
 File_Base: PromLib_EcolPtai
@@ -20,7 +19,7 @@ ExprHist_File: Plot_ExpressionHist
 LogoPlot_File: Plot_Logo-FI
 CorrPlot_File: Plot_Corr-Ytrue-VS-Ypred
 X_Expr: Plot_CrossExpr
-ML_Regressor: SVR
+ML_Regressor: RFR
 Data_Standard: True
 Expression_Unit: $\mu$M(GFP)/(gCDW*h)
 RefSeq: GCCCATTGACAAGGCTCTCGCGGCCAGGTATAATTGCACG
@@ -31,3 +30,4 @@ Synth_Seq_MaxNumber: 10000
 Csv_ID: Synth-Library
 SynLib_Date: 20200522
 ML_Date: 00000000
+Figure_Font_Size: 12

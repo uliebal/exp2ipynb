@@ -745,15 +745,50 @@ def ExpressionVariation_HeatMap(SeqList, Y_Col_Name = 'promoter activity'):
 ###########################################################################
 ###########################################################################
 
-def df_HeatMaps(Data_df, Z_Label, Plot_Save=False, Plot_File='dummy', cbar_lab=None):
+def ExpressionMean_ttest(a_np, b_np, OH_List):
+    '''
+    Calculating whether the mean expression values are significantly different.
+    Input:
+        a_np:       np vector, contains the measurements of cross host/reporter
+        b_np:       np vector, contains the measurements of cross host/reporter
+        OH_List:    list, contains OneHot encoded sequence in list format generate by e.g. list(SeqDat['OneHot'])
+    Output:
+        Variation_HeatMap_df: dataframe, contains the variation of expression strength for each base on each position
+    '''
+    import numpy as np
+    import pandas as pd
+    from scipy.stats import ttest_ind
+    
+    # creating the filter
+    Seq_OneHot_ar = np.array(OH_List).reshape(len(OH_List),-1)
+    myBasePos = Seq_OneHot_ar.shape[1]
+    # transforming the input to the filter dimensions
+    Expr_mult_a = np.tile(a_np, [myBasePos,1]).T
+    Expr_mult_b = np.tile(b_np, [myBasePos,1]).T
+    # multiplying the input with the filter
+    a_matr = np.multiply(Seq_OneHot_ar, Expr_mult_a)
+    b_matr = np.multiply(Seq_OneHot_ar, Expr_mult_b)
+
+    # performing the students t-test
+    stat, p = ttest_ind(a_matr, b_matr, axis=0)
+    # identifying significant differences in the mean values
+    MeanSignDiff = np.multiply(p<=.05,1).reshape(-1,4)
+    Expression_ttest = pd.DataFrame(MeanSignDiff, columns=['A','C','G','T'])
+    return Expression_ttest
+
+###########################################################################
+###########################################################################
+
+def df_HeatMaps(Data_df, Z_Label, Plot_Save=False, Plot_File='dummy', cbar_lab=None, FigFontSize=14):
     '''
     Function for heat map generation
     Input:
-            Data_df: dataframe, rows represent sequence position, columns represent bases with their names as labels
-            Z_Label: string, label for the colorbar
-            Plot_Save: boolean, decision whether to save plot
-            Plot_File: string, name for the figure file
-            cbar_lab: sting vector, names for the color bar
+            Data_df:     dataframe, rows represent sequence position, columns represent bases with their names as labels
+            Z_Label:     string, label for the colorbar
+            Plot_Save:   boolean, decision whether to save plot
+            Plot_File:   string, name for the figure file
+            cbar_lab:    sting vector, names for the color bar
+            FigFontSize: integer, font size for axis labels
     '''
     import matplotlib.pyplot as plt
     import numpy as np
@@ -777,8 +812,8 @@ def df_HeatMaps(Data_df, Z_Label, Plot_Save=False, Plot_File='dummy', cbar_lab=N
     #rotate label if too long
 #     plt.xticks(rotation=90)
 
-    plt.xlabel('Position')
-    plt.ylabel('Base')
+    plt.xlabel('Position', fontsize=FigFontSize)
+    plt.ylabel('Base', fontsize=FigFontSize)
     # plt.title('asdf')
     if cbar_lab is not None:
         tick_num = len(cbar_lab)
@@ -787,7 +822,7 @@ def df_HeatMaps(Data_df, Z_Label, Plot_Save=False, Plot_File='dummy', cbar_lab=N
         cbar = fig.colorbar(im, ticks=myticks, label=Z_Label)
         cbar.ax.set_yticklabels(cbar_lab)
     else:
-        fig.colorbar(im, label=Z_Label)
+        fig.colorbar(im, label=Z_Label) # , fontsize=FigFontSize
         
     if Plot_Save:
         Fig_Type = Plot_File.split('.')[1]

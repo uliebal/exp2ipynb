@@ -1,10 +1,12 @@
 # This file contains the naming conventions for all output files. It is automatically generated when going through step "0-Workflow".
 Data_File: XHost_Replicates_Seq+Spacer.csv
-Library_Expression: 2
-Library_Sequence_single: True
 Sequence_column: Spacer
 Y_Col_Name: ['Ecol-Activity', 'Ptai-Activity']
 ID_Col_Name: Strain ID Ecol
+Stats2Samples: False
+Stats_Std:
+Stats_Samples:
+Library_Expression: 2
 Add_Feat: ['GC-content']
 Figure_Type: png
 File_Base: Spacer_all
@@ -17,8 +19,8 @@ ExprHist_File: Plot_ExpressionHist
 LogoPlot_File: Plot_Logo-FeatureImportance
 CorrPlot_File: Plot_Corr-Ytrue-VS-Ypred
 X_Expr: Plot_CrossExpr
-ML_Regressor: RFR
-Data_Standard: False
+ML_Regressor: SVR
+Data_Standard: True
 Expression_Unit: $\mu$M(GFP)/(gCDW*h)
 RefSeq: 
 TestRatio: 0.1
@@ -27,4 +29,5 @@ Entropy_cutoff: 0.2
 Synth_Seq_MaxNumber: 10000
 Csv_ID: Synth-Library
 SynLib_Date: 20200523
-ML_Date: 20200523
+ML_Date: 20200529
+Figure_Font_Size: 12
