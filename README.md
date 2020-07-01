@@ -19,4 +19,4 @@ The analysis is distributed in different notebooks:
 Last Version: 2020/07/01<br>
 Author: Ulf Liebal<>br
 Contact: ulf.liebal@rwth-aachen.de<br>
-License: see License.txt<br>
+License: see LICENSE file<br>
